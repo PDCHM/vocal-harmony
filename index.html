@@ -17,7 +17,7 @@
   body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
   h1,h2,h3{font-family:'Playfair Display',serif;}
   nav{display:flex;align-items:center;justify-content:space-between;padding:18px 32px;border-bottom:1px solid var(--border);background:var(--surface);position:sticky;top:0;z-index:100;}
-  .nav-logo{font-family:'Playfair Display',serif;font-size:20px;color:var(--accent);}
+  .nav-logo{font-family:'Playfair Display',serif;font-size:20px;color:var(--accent);cursor:pointer;}
   .nav-tabs{display:flex;gap:4px;}
   .nav-tab{background:none;border:none;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:13px;padding:7px 14px;border-radius:6px;cursor:pointer;transition:all .2s;}
   .nav-tab:hover{color:var(--text);background:var(--surface2);}
@@ -124,7 +124,6 @@
   </div>
 </nav>
 
-<!-- LIBRARY -->
 <div class="page active" id="page-library">
   <div class="page-header">
     <h2>Song Library</h2>
@@ -134,7 +133,6 @@
   <div id="songsGrid" class="songs-grid"><div class="loading"><div class="spinner"></div> Loading songs...</div></div>
 </div>
 
-<!-- SUBMIT HOMEWORK -->
 <div class="page" id="page-upload">
   <div class="page-header">
     <h2>Submit a Recording</h2>
@@ -182,7 +180,6 @@
   </div>
 </div>
 
-<!-- ADMIN -->
 <div class="page" id="page-admin">
   <div class="page-header"><h2>Admin Panel</h2><p>Manage songs, voice parts and categories</p></div>
   <div class="stats-row">
@@ -238,9 +235,6 @@
   </div>
 </div>
 
-<!-- Login modal removed - using secret URL -->
-
-<!-- PART MODAL -->
 <div class="modal-overlay" id="partModal" onclick="closeModalOuter(event,'partModal')">
   <div class="modal">
     <div class="modal-header">
@@ -257,10 +251,8 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, collection, doc, addDoc, updateDoc, deleteDoc, getDocs, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-// ── CONFIG ────────────────────────────────────────────────────────────────────
 const CLOUD_NAME = 'dyg9hxapf';
 const UPLOAD_PRESET = 'ccp7vjq2';
-const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`;
 
 const app = initializeApp({
   apiKey: "AIzaSyDbInHK5FPN18GSN3N_BXmdI90EuLgGqII",
@@ -272,20 +264,17 @@ const app = initializeApp({
 });
 const db = getFirestore(app);
 
-// ── STATE ─────────────────────────────────────────────────────────────────────
 const S = {
   isAdmin:false, songs:[], categories:[], uploads:[],
   sessionIds:[], pendingFile:null, partRows:[], editingId:null, currentCat:'all'
 };
 window._S = S;
 
-// ── CLOUDINARY UPLOAD ─────────────────────────────────────────────────────────
 async function uploadToCloudinary(file, onProgress) {
   return new Promise((resolve, reject) => {
     const fd = new FormData();
     fd.append('file', file);
     fd.append('upload_preset', UPLOAD_PRESET);
-    fd.append('resource_type', 'video'); // Cloudinary uses 'video' for audio files
     const xhr = new XMLHttpRequest();
     xhr.open('POST', `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/video/upload`);
     xhr.upload.onprogress = e => { if(e.lengthComputable && onProgress) onProgress(Math.round(e.loaded/e.total*100)); };
@@ -299,7 +288,6 @@ async function uploadToCloudinary(file, onProgress) {
   });
 }
 
-// ── FETCH DATA ────────────────────────────────────────────────────────────────
 async function fetchAll() {
   try {
     const [catSnap, songSnap, uploadSnap] = await Promise.all([
@@ -317,38 +305,46 @@ async function fetchAll() {
   } catch(e) { console.error('Fetch error:', e); showToast('Connection error: '+e.message); }
 }
 
-// Poll every 15 seconds for new data
 fetchAll();
 setInterval(fetchAll, 15000);
 initPartRows();
 
-// ── NAV ───────────────────────────────────────────────────────────────────────
 window.showPage = (id, el) => {
-  if(id==='admin' && !S.isAdmin){ openModal('loginModal'); document.getElementById('loginUser').value=''; document.getElementById('loginPass').value=''; return; }
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
   document.getElementById('page-'+id).classList.add('active');
   if(el) el.classList.add('active');
 };
 
-window.doLogin = () => {
-  const u=document.getElementById('loginUser').value.trim().toLowerCase();
-  const pw=document.getElementById('loginPass').value.trim();
-  if(u==='admin' && pw==='admin'){
-    S.isAdmin=true;
-    localStorage.setItem('vh_admin','1');
-    document.getElementById('userLabel').textContent='Admin';
-    document.getElementById('signOutBtn').style.display='inline-block';
-    closeModal('loginModal');
-    document.querySelectorAll('.page').forEach(pg=>pg.classList.remove('active'));
-    document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
-    document.getElementById('page-admin').classList.add('active');
-    document.querySelectorAll('.nav-tab')[2].classList.add('active');
-    showToast('Welcome, Admin!');
-  } else {
-    showToast('Invalid credentials. Use admin / admin');
-  }
-};
+function unlockAdmin() {
+  S.isAdmin=true;
+  localStorage.setItem('vh_admin','1');
+  document.getElementById('adminNavBtn').style.display='';
+  document.getElementById('userLabel').textContent='Admin';
+  document.getElementById('signOutBtn').style.display='inline-block';
+  showToast('Welcome, Admin!');
+}
+
+if(localStorage.getItem('vh_admin')==='1') {
+  S.isAdmin=true;
+  document.getElementById('adminNavBtn').style.display='';
+  document.getElementById('userLabel').textContent='Admin';
+  document.getElementById('signOutBtn').style.display='inline-block';
+}
+
+let tapCount=0, tapTimer;
+document.querySelector('.nav-logo').addEventListener('click',()=>{
+  tapCount++; clearTimeout(tapTimer);
+  tapTimer=setTimeout(()=>tapCount=0,2000);
+  if(tapCount>=5){tapCount=0;if(!S.isAdmin)unlockAdmin();}
+});
+
+let keyBuf='';
+document.addEventListener('keydown',e=>{
+  keyBuf+=e.key.toLowerCase();
+  if(keyBuf.length>10) keyBuf=keyBuf.slice(-10);
+  if(keyBuf.includes('admin')){keyBuf='';if(!S.isAdmin)unlockAdmin();}
+});
 
 window.doLogout = () => {
   S.isAdmin=false;
@@ -363,9 +359,6 @@ window.doLogout = () => {
   showToast('Signed out.');
 };
 
-
-
-// ── LIBRARY ───────────────────────────────────────────────────────────────────
 function renderCatFilter(){
   const el=document.getElementById('catFilter');
   el.innerHTML=`<div class="cat-pill ${S.currentCat==='all'?'active':''}" onclick="filterCat('all',this)">All</div>`
@@ -409,7 +402,6 @@ window.openPart=(songId,partName)=>{
   openModal('partModal');
 };
 
-// ── SUBMIT HOMEWORK ───────────────────────────────────────────────────────────
 window.checkSubmitReady=()=>{
   const n=document.getElementById('uploaderName').value.trim();
   const s=document.getElementById('uploadSongSelect').value;
@@ -491,7 +483,6 @@ function renderSongSelect(){
   el.innerHTML='<option value="">— choose song —</option>'+S.songs.map(s=>`<option value="${s.id}">${s.title}</option>`).join('');
 }
 
-// ── ADMIN SONGS ───────────────────────────────────────────────────────────────
 window.adminSaveSong=async()=>{
   const title=document.getElementById('adminSongTitle').value.trim();
   const cat=document.getElementById('adminSongCat').value;
@@ -579,7 +570,6 @@ function renderAdminSongList(){
     </div>`).join('');
 }
 
-// ── ADMIN CATEGORIES ──────────────────────────────────────────────────────────
 window.adminAddCat=async()=>{
   const val=document.getElementById('newCatInput').value.trim();
   if(!val){showToast('Enter a category name.');return;}
@@ -609,7 +599,6 @@ function renderCatSelect(){
   el.value=prev;
 }
 
-// ── ADMIN UPLOADS ─────────────────────────────────────────────────────────────
 function renderAdminUploads(){
   const wrap=document.getElementById('adminUploadsWrap'); if(!wrap)return;
   if(!S.uploads.length){wrap.innerHTML='<p style="text-align:center;padding:20px;color:var(--muted);font-size:13px;">No submissions yet.</p>';return;}
@@ -653,7 +642,6 @@ window.deleteUpload=async id=>{
   await fetchAll(); showToast('Deleted.');
 };
 
-// ── PARTS MANAGER ─────────────────────────────────────────────────────────────
 function initPartRows(){
   S.partRows=[{name:'Melody',file:null,url:null},{name:'Tenor',file:null,url:null},{name:'Alto',file:null,url:null}];
   renderPartRows();
@@ -673,7 +661,6 @@ window.renderPR=renderPartRows;
 window.addPartRow=()=>{S.partRows.push({name:'Part',file:null,url:null});renderPartRows();};
 window.partFile=(i,input)=>{if(input.files[0]){S.partRows[i].file=input.files[0];S.partRows[i].url=null;renderPartRows();}};
 
-// ── STATS & UTILS ─────────────────────────────────────────────────────────────
 function updateStats(){
   document.getElementById('statSongs').textContent=S.songs.length;
   document.getElementById('statUploads').textContent=S.uploads.length;
