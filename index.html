@@ -120,6 +120,7 @@
   </div>
   <div class="nav-right">
     <span style="font-size:12px;color:var(--muted)" id="userLabel"></span>
+    <button id="signOutBtn" onclick="doLogout()" class="btn btn-ghost btn-sm" style="display:none">Sign Out</button>
   </div>
 </nav>
 
@@ -351,11 +352,11 @@ window.showPage = (id, el) => {
 window.doLogin = () => {
   const u=document.getElementById('loginUser').value.trim().toLowerCase();
   const pw=document.getElementById('loginPass').value.trim();
-  const validUser = u === 'admin';
-  const validPass = pw === 'admin';
-  if(validUser && validPass){
+  if(u==='admin' && pw==='admin'){
     S.isAdmin=true;
+    localStorage.setItem('vh_admin','1');
     document.getElementById('userLabel').textContent='Admin';
+    document.getElementById('signOutBtn').style.display='inline-block';
     closeModal('loginModal');
     document.querySelectorAll('.page').forEach(pg=>pg.classList.remove('active'));
     document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
@@ -363,10 +364,28 @@ window.doLogin = () => {
     document.querySelectorAll('.nav-tab')[2].classList.add('active');
     showToast('Welcome, Admin!');
   } else {
-    console.log('Login failed. User: ['+u+'] Pass length: '+pw.length);
     showToast('Invalid credentials. Use admin / admin');
   }
 };
+
+window.doLogout = () => {
+  S.isAdmin=false;
+  localStorage.removeItem('vh_admin');
+  document.getElementById('userLabel').textContent='';
+  document.getElementById('signOutBtn').style.display='none';
+  document.querySelectorAll('.page').forEach(pg=>pg.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-library').classList.add('active');
+  document.querySelectorAll('.nav-tab')[0].classList.add('active');
+  showToast('Signed out.');
+};
+
+// Restore admin session on page load
+if(localStorage.getItem('vh_admin')==='1'){
+  S.isAdmin=true;
+  document.getElementById('userLabel').textContent='Admin';
+  document.getElementById('signOutBtn').style.display='inline-block';
+}
 
 // ── LIBRARY ───────────────────────────────────────────────────────────────────
 function renderCatFilter(){
