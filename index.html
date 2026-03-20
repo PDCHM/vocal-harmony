@@ -247,11 +247,11 @@
     </div>
     <div class="form-group">
       <label class="form-label">Username</label>
-      <input class="form-input" id="loginUser" type="text" placeholder="admin">
+      <input class="form-input" id="loginUser" type="text" placeholder="admin" autocomplete="off">
     </div>
     <div class="form-group">
       <label class="form-label">Password</label>
-      <input class="form-input" id="loginPass" type="password" placeholder="••••••" onkeydown="if(event.key==='Enter')doLogin()">
+      <input class="form-input" id="loginPass" type="password" placeholder="••••••" onkeydown="if(event.key==='Enter')doLogin()" autocomplete="new-password">
     </div>
     <p style="font-size:12px;color:var(--muted);margin-bottom:16px;">Admin access only.</p>
     <button class="btn btn-primary" style="width:100%" onclick="doLogin()">Sign In</button>
@@ -342,7 +342,7 @@ initPartRows();
 
 // ── NAV ───────────────────────────────────────────────────────────────────────
 window.showPage = (id, el) => {
-  if(id==='admin' && !S.isAdmin){ openModal('loginModal'); return; }
+  if(id==='admin' && !S.isAdmin){ openModal('loginModal'); document.getElementById('loginUser').value=''; document.getElementById('loginPass').value=''; return; }
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
   document.getElementById('page-'+id).classList.add('active');
