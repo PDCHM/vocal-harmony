@@ -349,9 +349,11 @@ window.showPage = (id, el) => {
 };
 
 window.doLogin = () => {
-  const u=document.getElementById('loginUser').value.trim();
+  const u=document.getElementById('loginUser').value.trim().toLowerCase();
   const pw=document.getElementById('loginPass').value.trim();
-  if(u==='admin'&&pw==='admin'){
+  const validUser = u === 'admin';
+  const validPass = pw === 'admin';
+  if(validUser && validPass){
     S.isAdmin=true;
     document.getElementById('userLabel').textContent='Admin';
     closeModal('loginModal');
@@ -360,7 +362,10 @@ window.doLogin = () => {
     document.getElementById('page-admin').classList.add('active');
     document.querySelectorAll('.nav-tab')[2].classList.add('active');
     showToast('Welcome, Admin!');
-  } else { showToast('Invalid credentials.'); }
+  } else {
+    console.log('Login failed. User: ['+u+'] Pass length: '+pw.length);
+    showToast('Invalid credentials. Use admin / admin');
+  }
 };
 
 // ── LIBRARY ───────────────────────────────────────────────────────────────────
